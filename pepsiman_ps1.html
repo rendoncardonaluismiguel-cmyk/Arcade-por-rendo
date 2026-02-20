@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000010">
+<title>Pepsiman — PS1</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{--blue:#0044ff;--blue2:#0088ff;--red:#ff0000;--silver:#ccddff;--tx:#aaccff;}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Courier New',monospace;touch-action:none;}
+
+#splash{position:fixed;inset:0;z-index:999;background:linear-gradient(180deg,#000015 0%,#000820 50%,#000 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;overflow:hidden;}
+#splash::before{content:'🥤 PEPSI 🥤 PEPSI 🥤 PEPSI 🥤 PEPSI 🥤 PEPSI 🥤';position:absolute;top:5%;left:0;right:0;color:#001144;font-size:10px;letter-spacing:3px;text-align:center;white-space:nowrap;overflow:hidden;animation:ticker 10s linear infinite;pointer-events:none;}
+@keyframes ticker{from{text-indent:100%}to{text-indent:-200%}}
+
+.pepsi-logo{width:90px;height:90px;border-radius:50%;background:linear-gradient(180deg,#0044ff 0%,#0044ff 47%,#fff 47%,#fff 53%,#ff0000 53%,#ff0000 100%);box-shadow:0 0 30px #0044ff88;animation:logospin 4s ease-in-out infinite;flex-shrink:0;}
+@keyframes logospin{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(5deg) scale(1.05)}}
+
+#splash h1{font-size:clamp(44px,16vw,82px);letter-spacing:4px;text-transform:uppercase;text-align:center;line-height:0.9;background:linear-gradient(180deg,#0066ff 0%,#0044ff 45%,#fff 45%,#fff 55%,#ff2200 55%,#cc0000 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 15px #0044ff88);}
+#splash h2{font-size:clamp(11px,3.5vw,16px);color:var(--silver);letter-spacing:5px;text-shadow:0 0 10px var(--blue2);text-transform:uppercase;}
+#splash .badge{color:var(--tx);font-size:clamp(7px,2vw,9px);letter-spacing:2px;border:1px solid #001144;padding:5px 16px;background:rgba(0,0,0,0.7);text-align:center;line-height:1.8;}
+#play-btn{padding:14px 48px;background:transparent;border:2px solid var(--blue2);color:var(--blue2);font-family:'Courier New',monospace;font-size:clamp(13px,3.5vw,16px);letter-spacing:4px;cursor:pointer;text-transform:uppercase;animation:glw 1.4s ease-in-out infinite;margin-top:4px;}
+@keyframes glw{0%,100%{box-shadow:0 0 12px #0033cc99}50%{box-shadow:0 0 28px #0088ffff}}
+#play-btn:active{background:var(--blue2);color:#fff;animation:none;}
+
+#app{display:none;flex-direction:column;width:100%;height:100%;}
+#topbar{height:36px;min-height:36px;background:linear-gradient(90deg,#000,#00000d,#000);border-bottom:2px solid #001144;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0;}
+#topbar .logo{color:var(--blue2);font-size:11px;letter-spacing:3px;text-shadow:0 0 8px var(--blue2);}
+.tbtn{background:none;border:1px solid #001144;color:var(--tx);font-size:15px;padding:3px 9px;cursor:pointer;border-radius:3px;}
+.tbtn:active{background:var(--blue);color:#fff;}
+
+#screen{flex:1;background:#000;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;min-height:0;}
+#screen::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:5;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px);}
+#game{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+#game canvas{image-rendering:pixelated;display:block;}
+
+#loader{position:absolute;inset:0;z-index:10;background:radial-gradient(ellipse at center,#000010 0%,#000 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;}
+.l-logo{width:55px;height:55px;border-radius:50%;flex-shrink:0;background:linear-gradient(180deg,#0044ff 0%,#0044ff 47%,#fff 47%,#fff 53%,#ff0000 53%,#ff0000 100%);animation:spin 2s linear infinite;box-shadow:0 0 20px #0044ff66;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loader h2{color:var(--blue2);font-size:clamp(16px,5vw,26px);letter-spacing:4px;text-shadow:0 0 16px #0055ff;text-align:center;}
+#loader h3{color:#ff3300;font-size:clamp(9px,2.5vw,11px);letter-spacing:3px;}
+#lbar-wrap{width:260px;height:10px;border:1px solid #001144;background:#00000a;border-radius:2px;}
+#lbar{height:100%;width:0%;background:linear-gradient(90deg,#0033cc,var(--blue2));box-shadow:0 0 8px var(--blue2);transition:width .2s;border-radius:2px;}
+#dl-info{display:flex;justify-content:space-between;width:260px;}
+#lmsg{color:#334466;font-size:8px;letter-spacing:1px;}
+#dl-speed{color:#334466;font-size:8px;}
+#lerr{color:#ff8866;font-size:10px;display:none;text-align:center;max-width:300px;line-height:2;border:1px solid #440000;padding:14px 16px;background:#050000;}
+.retry-btn{margin-top:10px;padding:8px 20px;background:transparent;border:1px solid #ff4444;color:#ff4444;font-family:'Courier New',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;display:block;width:100%;}
+.retry-btn:active{background:#ff4444;color:#000;}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="pepsi-logo"></div>
+  <div class="badge">SONY PLAYSTATION · 1999 · JAPÓN</div>
+  <h1>PEPSI<br>MAN</h1>
+  <h2>PLAYSTATION 1</h2>
+  <button id="play-btn" onclick="boot()">🥤 JUGAR</button>
+  <div style="color:#000a1a;font-size:7px;letter-spacing:2px;margin-top:4px">DESCARGA AUTOMÁTICA ~136MB · NECESITA INTERNET</div>
+</div>
+
+<div id="app">
+  <div id="topbar">
+    <div class="logo">🥤 PEPSIMAN — PS1</div>
+    <div style="display:flex;gap:6px">
+      <button class="tbtn" onclick="toggleFS()">⛶</button>
+      <button class="tbtn" id="muteBtn" onclick="toggleMute()">🔊</button>
+    </div>
+  </div>
+  <div id="screen">
+    <div id="loader">
+      <div class="l-logo"></div>
+      <h2>PEPSIMAN</h2>
+      <h3>PS1 · PCSX-REARMED</h3>
+      <div id="lbar-wrap"><div id="lbar"></div></div>
+      <div id="dl-info">
+        <div id="lmsg">INICIANDO...</div>
+        <div id="dl-speed"></div>
+      </div>
+      <div id="lerr">
+        <div id="lerr-msg"></div>
+        <button class="retry-btn" onclick="startDownload(0)">↺ REINTENTAR</button>
+      </div>
+    </div>
+    <div id="game"></div>
+  </div>
+</div>
+
+<script>
+const FILE_ID = "1CpnRDPAr5pztSwucv4r-kcoDEPrQSmcW";
+
+// Múltiples proxies CORS en orden de prioridad
+const PROXIES = [
+  // Proxy 1: corsproxy.io
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  // Proxy 2: api.allorigins.win  
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  // Proxy 3: thingproxy
+  url => `https://thingproxy.freeboard.io/fetch/${url}`,
+];
+
+// URLs de Google Drive para el archivo
+const DRIVE_URLS = [
+  `https://drive.usercontent.google.com/download?id=${FILE_ID}&export=download&confirm=t`,
+  `https://drive.google.com/uc?export=download&id=${FILE_ID}&confirm=t`,
+];
+
+function boot() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  startDownload(0);
+}
+
+function setProgress(pct, msg, speed) {
+  document.getElementById('lbar').style.width = Math.min(100, pct) + '%';
+  document.getElementById('lmsg').textContent = msg;
+  if (speed !== undefined) document.getElementById('dl-speed').textContent = speed;
+}
+
+function showError(msg) {
+  document.getElementById('lerr-msg').innerHTML = msg;
+  document.getElementById('lerr').style.display = 'block';
+}
+function hideError() { document.getElementById('lerr').style.display = 'none'; }
+
+async function startDownload(attempt) {
+  hideError();
+  
+  // Intentamos primero sin proxy (funciona si Drive no bloquea CORS)
+  // Luego con cada proxy
+  const strategies = [
+    // Sin proxy
+    { label: 'CONECTANDO A GOOGLE DRIVE...', fn: () => tryDirect() },
+    // Con proxies
+    ...PROXIES.map((proxy, i) => ({
+      label: `PROXY ${i+1} · REINTENTANDO...`,
+      fn: () => tryWithProxy(proxy)
+    }))
+  ];
+
+  const strategy = strategies[attempt % strategies.length];
+  if (!strategy) {
+    showError('❌ No se pudo descargar.<br><br>Posibles causas:<br>· Archivo de Drive no es público<br>· Todos los proxies bloqueados<br><br>Verifica que el archivo esté en<br><b>"Cualquiera con el enlace"</b>');
+    return;
+  }
+
+  setProgress(2, strategy.label, '');
+  
+  try {
+    const zipData = await strategy.fn();
+    if (zipData && zipData.byteLength > 10 * 1024 * 1024) {
+      // Éxito — tenemos datos reales
+      await processZip(zipData);
+    } else {
+      throw new Error('Datos incompletos o bloqueados');
+    }
+  } catch(e) {
+    console.warn(`Intento ${attempt + 1} falló:`, e.message);
+    if (attempt < strategies.length - 1) {
+      setProgress(0, `REINTENTANDO... (${attempt + 2}/${strategies.length})`, '');
+      setTimeout(() => startDownload(attempt + 1), 800);
+    } else {
+      showError('❌ ' + e.message + '<br><br>Verifica que el archivo de Drive sea público.');
+    }
+  }
+}
+
+async function tryDirect() {
+  for (const url of DRIVE_URLS) {
+    try {
+      const res = await fetchWithProgress(url);
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('text/html')) {
+        return await streamToBuffer(res);
+      }
+    } catch(e) { console.warn('Direct failed:', e.message); }
+  }
+  throw new Error('Descarga directa bloqueada por CORS');
+}
+
+async function tryWithProxy(proxyFn) {
+  for (const driveUrl of DRIVE_URLS) {
+    try {
+      const proxyUrl = proxyFn(driveUrl);
+      const res = await fetchWithProgress(proxyUrl);
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('text/html')) {
+        return await streamToBuffer(res);
+      }
+    } catch(e) { console.warn('Proxy attempt failed:', e.message); }
+  }
+  throw new Error('Proxy no disponible');
+}
+
+async function fetchWithProgress(url) {
+  const res = await fetch(url, {cache: 'no-store'});
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res;
+}
+
+async function streamToBuffer(response) {
+  const total = parseInt(response.headers.get('content-length') || '0') || 136 * 1024 * 1024;
+  const reader = response.body.getReader();
+  const chunks = [];
+  let received = 0, lastTime = Date.now(), lastBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+
+    const now = Date.now();
+    if (now - lastTime > 500) {
+      const bps = (received - lastBytes) / ((now - lastTime) / 1000);
+      const mbps = (bps / 1024 / 1024).toFixed(1);
+      const eta = bps > 0 ? Math.ceil((total - received) / bps) : '?';
+      setProgress(
+        2 + (received / total) * 60,
+        `${(received/1024/1024).toFixed(1)} MB / ${(total/1024/1024).toFixed(0)} MB`,
+        `${mbps} MB/s · ${eta}s`
+      );
+      lastTime = now; lastBytes = received;
+    }
+  }
+
+  const buf = new Uint8Array(received);
+  let pos = 0;
+  for (const c of chunks) { buf.set(c, pos); pos += c.length; }
+  return buf.buffer;
+}
+
+async function processZip(arrayBuffer) {
+  setProgress(64, 'DESCOMPRIMIENDO ZIP...', '');
+  await loadScript('https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js');
+  
+  const files = fflate.unzipSync(new Uint8Array(arrayBuffer));
+  const names = Object.keys(files);
+  console.log('ZIP contents:', names);
+
+  setProgress(72, 'PREPARANDO TRACKS...', '');
+
+  const tracks = names
+    .filter(n => n.toLowerCase().endsWith('.bin'))
+    .sort((a, b) => {
+      const na = parseInt(a.match(/track\s*(\d+)/i)?.[1] || '1');
+      const nb = parseInt(b.match(/track\s*(\d+)/i)?.[1] || '1');
+      return na - nb;
+    });
+  const cueFile = names.find(n => n.toLowerCase().endsWith('.cue'));
+
+  if (!tracks.length) throw new Error('No se encontraron archivos .bin');
+
+  const trackURLs = {};
+  for (const t of tracks) {
+    trackURLs[t] = URL.createObjectURL(new Blob([files[t]], {type:'application/octet-stream'}));
+  }
+
+  let romURL = trackURLs[tracks[0]];
+  if (cueFile) {
+    let cue = new TextDecoder().decode(files[cueFile]);
+    for (const t of tracks) {
+      cue = cue.split(t.split('/').pop()).join(trackURLs[t]);
+    }
+    romURL = URL.createObjectURL(new Blob([cue], {type:'text/plain'}));
+  }
+
+  setProgress(78, 'CARGANDO EMULADOR PS1...', '');
+  await initEJS(romURL);
+}
+
+async function initEJS(romURL) {
+  window.EJS_player = '#game';
+  window.EJS_core = 'pcsx_rearmed';
+  window.EJS_gameUrl = romURL;
+  window.EJS_gameName = 'Pepsiman (Japan)';
+  window.EJS_color = '#0055ff';
+  window.EJS_backgroundColor = '#000000';
+  window.EJS_startOnLoaded = true;
+  window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+  window.EJS_VirtualGamepad = true;
+  window.EJS_Buttons = {gamepad:true,mute:true,settings:true,fullscreen:false,save:true,load:true,screenshot:false,cheat:false,volume:true,quickSave:true,quickLoad:true,zoom:false,crt:false,ratio:false,reset:true};
+
+  window.EJS_onLoadProgress = p => setProgress(78 + p * 20, 'CARGANDO CORE PS1... ' + Math.round(p*100) + '%', '');
+  window.EJS_onGameStart = () => {
+    setProgress(100, '🥤 PEPSI!', '');
+    setTimeout(() => { document.getElementById('loader').style.display = 'none'; }, 500);
+  };
+
+  await loadScript('https://cdn.emulatorjs.org/stable/data/loader.js');
+}
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) { res(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = res;
+    s.onerror = () => rej(new Error('No se pudo cargar: ' + src));
+    document.head.appendChild(s);
+  });
+}
+
+function toggleFS() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
+    if (screen.orientation?.lock) screen.orientation.lock('landscape').catch(()=>{});
+  } else document.exitFullscreen?.();
+}
+
+let muted = false;
+function toggleMute() {
+  muted = !muted;
+  document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+  if (window.EJS_emulator?.setVolume) EJS_emulator.setVolume(muted ? 0 : 1);
+  document.querySelectorAll('audio,video').forEach(a => a.muted = muted);
+}
+
+document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, {passive:false});
+document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});
+</script>
+</body>
+</html>
